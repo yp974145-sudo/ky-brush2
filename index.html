@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="theme-color" content="#080c11">
 <title>研题 · 考研刷题系统</title>
-<link rel="manifest" href="../408-brush/manifest.json">
 <style>
 :root{
   --bg-deep:#080c11;--bg-primary:#0d1117;--bg-card:#131820;--bg-hover:#1a2230;
@@ -430,6 +429,7 @@ const A={
   _cloud:null,_uid:null,_uploadTO:null,
 
   async init(){
+    try{
     for(const s of[QUESTIONS_408,QUESTIONS_MATH,QUESTIONS_POLITICS,QUESTIONS_ENGLISH])
       if(Array.isArray(s))for(const q of s)if(q.question&&q.question.length>1)this._all.push(q);
     try{this._prog=JSON.parse(localStorage.getItem('yt2_prog')||'{}')}catch(e){}
@@ -438,6 +438,10 @@ const A={
     this._buildFilters();
     this._daily();
     this.applyFilters();
+    }catch(e){
+      document.body.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;font-family:system-ui,sans-serif;background:#080c11;color:#e6edf3;text-align:center;padding:20px"><h1 style="color:#f85149;font-size:1.3rem">⚠ 初始化失败</h1><p style="color:#8b949e;max-width:400px;font-size:.85rem">${e.message||'未知错误'}</p><p style="color:#484f58;font-size:.75rem">请检查数据文件是否完整，或刷新页面重试</p></div>`;
+      console.error('Init failed:',e);
+    }
   },
 
   // ===== 筛选 =====
@@ -777,11 +781,7 @@ const A={
   _saveFav(){try{localStorage.setItem('yt2_fav',JSON.stringify([...this._fav]))}catch(e){}},
 
   // ===== 云端 =====
-  _initCloud(){
-    if(!window.supabase)return;
-    this._cloud=window.supabase.createClient('https://mxtkkglvfkfwcqfuwnws.supabase.co','sb_publishable_wewoxkAjlA9RW9_9O34x3g_hHEKFfSU');
-    this._cloud.auth.getSession().then(({data})=>{if(data.session){this._uid=data.session.user.id;this._onCloudLogin()}});
-  },
+  _initCloud(){try{if(!window.supabase)return;this._cloud=window.supabase.createClient('https://mxtkkglvfkfwcqfuwnws.supabase.co','sb_publishable_wewoxkAjlA9RW9_9O34x3g_hHEKFfSU');this._cloud.auth.getSession().then(({data})=>{if(data.session){this._uid=data.session.user.id;this._onCloudLogin()}}).catch(()=>{})}catch(e){console.warn('Cloud:',e.message)}},
   openModal(id){document.getElementById(id).classList.add('show')},
   closeModal(id){document.getElementById(id).classList.remove('show')},
   showLogin(){this.openModal('modal-login');if(this._uid){document.getElementById('login-form').style.display='none';document.getElementById('login-done').style.display='block';document.getElementById('login-uid').textContent=this._uid.slice(0,8)+'…'}else{document.getElementById('login-form').style.display='block';document.getElementById('login-done').style.display='none'}},
@@ -899,7 +899,7 @@ const A={
   },
 };
 
-document.addEventListener('DOMContentLoaded',()=>A.init());
+document.addEventListener('DOMContentLoaded',()=>{try{A.init()}catch(e){console.error(e);document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#080c11;color:#f85149;font-family:system-ui">⚠ 加载失败: '+e.message+'</div>'}});
 document.addEventListener('keydown',e=>{
   if(e.target.closest('input,textarea,select'))return;
   if(e.key==='ArrowLeft')A.prev();
