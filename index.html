@@ -786,13 +786,14 @@ const A={
   closeModal(id){document.getElementById(id).classList.remove('show')},
   showLogin(){this.openModal('modal-login');if(this._uid){document.getElementById('login-form').style.display='none';document.getElementById('login-done').style.display='block';document.getElementById('login-uid').textContent=this._uid.slice(0,8)+'…'}else{document.getElementById('login-form').style.display='block';document.getElementById('login-done').style.display='none'}},
   async doLogin(){
+    if(!this._cloud)return this._lmsg('云同步未连接，请刷新页面',1);
     const e=document.getElementById('login-email').value.trim(),p=document.getElementById('login-pass').value.trim();
     if(!e||!p)return this._lmsg('请输入邮箱和密码',1);
     try{const{data,error}=await this._cloud.auth.signInWithPassword({email:e,password:p});if(error)throw error;
     this._uid=data.user.id;this._lmsg('登录成功',0);this._onCloudLogin();this.showLogin()}catch(err){this._lmsg(err.message,1)}
   },
   async doSignup(){
-    const e=document.getElementById('login-email').value.trim(),p=document.getElementById('login-pass').value.trim();
+    if(!this._cloud)return this._lmsg('云同步未连接，请刷新页面',1);
     if(!e||!p)return this._lmsg('请输入邮箱和密码',1);if(p.length<6)return this._lmsg('密码至少6位',1);
     try{const{data,error}=await this._cloud.auth.signUp({email:e,password:p});if(error)throw error;
     if(data.user){this._uid=data.user.id;this._lmsg('注册成功',0);this._onCloudLogin();this.showLogin()}else{this._lmsg('请检查邮箱确认',0)}}catch(err){this._lmsg(err.message,1)}
@@ -800,6 +801,7 @@ const A={
   async doLogout(){if(this._cloud)await this._cloud.auth.signOut();this._uid=null;document.getElementById('sb-login-btn').textContent='☁️ 云端同步'},
   _lmsg(t,e){const el=document.getElementById('login-msg');el.textContent=t;el.style.color=e?'var(--red)':'var(--green)'},
   async _onCloudLogin(){
+    if(!this._cloud||!this._uid)return;
     document.getElementById('sb-login-btn').textContent='☁️ 已同步';document.getElementById('sb-login-btn').style.color='var(--green)';
     try{const{data,error}=await this._cloud.from('user_data').select('data').eq('user_id',this._uid).maybeSingle();
     if(!error&&data?.data?.yanti_v2_progress){this._prog={...this._prog,...data.data.yanti_v2_progress};this._saveProg();this._updateFooter()}}catch(e){}
